@@ -101,8 +101,9 @@ def getDictionaryFile():
     return finalFilePath
 
 
-def getHashes(filePath):
+def getHashes(filePath, userHash):
     hashes = {}
+    hashEncoding = ""
     try:
         print(f"Attempting to load hashes from {filePath}. Please wait...")
         with open(filePath, encoding="latin-1", errors="ignore") as f:
@@ -110,6 +111,7 @@ def getHashes(filePath):
                 line = line.strip("\n")
                 if line == "":
                     continue
+                if userHash == "md5":
                 md5 = hashlib.md5()
                 encodedLine = line.encode('utf-8')
                 md5.update(encodedLine)
@@ -129,7 +131,37 @@ def getPasswordHashes(filePath):
             hashes.append(hash)
     return hashes
 
+def detectHashType(hashExample):
+    if len(hashExample) == 32:
+        print("The program has detected that the hashes are utilizing MD5 hashing algorithm. It is recommended to use this type.")
+    elif len(hashExample) == 40:
+        print("The program has detected that the hashes are utilizing SHA1 hashing algorithm. It is recommended to use this type.")
+    elif len(hashExample) == 64:
+        print("The program has detected that the hashes are utilizing SHA256 hashing algorithm. It is recommended to use this type.")
+    else:
+        print("The program is unable to detect the hashing algorithm used. Recommend using each one until the password(s) is/are identified.")
 
+def getUserHashType():
+    hashSelected = False
+    while not hashSelected:
+        print("Available Hashing Algorithms:")
+        print("1. MD5")
+        print("2. SHA1")
+        print("3. SHA256")
+        userHash = input("Select the hashing algorithm you would like to use (e.x. 1): ")
+
+        if userHash == "1":
+            userHash = "md5"
+            hashSelected = True
+        elif userHash == "2":
+            userHash = "sha1"
+            hashSelected = True
+        elif userHash == "3":
+            userHash = "sha256"
+            hashSelected = True
+        else:
+            print("Invalid selection!\n")
+    return userHash
 
 def compareHashes(passwordHashes, dictionaryHashes):
     passwordStorage = {}
@@ -180,7 +212,11 @@ def main():
 
     passwordHashes = getPasswordHashes(passwordsFilePath)
 
-    dictionaryHashes = getHashes(dictionaryFilePath)
+    detectHashType(passwordHashes[0])
+
+    userHash = getUserHashType()
+
+    dictionaryHashes = getHashes(dictionaryFilePath, userHash)
 
     compareHashes(passwordHashes, dictionaryHashes)
 
