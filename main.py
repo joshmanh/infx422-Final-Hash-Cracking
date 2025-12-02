@@ -1,4 +1,5 @@
 import hashlib
+import time
 import os
 
 
@@ -37,18 +38,8 @@ def getPasswordsFile():
     finalFilePath = filePath
     return finalFilePath
 
-
-def getPasswordHashes(filePath):
-    hashes = []
-
-    with open(filePath) as f:
-        for line in f:
-            hashes.append(line.strip())
-
-    return hashes
-
-
-def getDictionaryHashes():
+def getDictionaryFile():
+    selector = 1
     isDict = False
 
     txtDictsHasItem = True
@@ -56,8 +47,6 @@ def getDictionaryHashes():
 
     txtOptions = {}
     csvOptions = {}
-
-    hashes = []
 
     txtDicts = os.listdir("./dictionaries/txt")
     csvDicts = os.listdir("./dictionaries/csv")
@@ -68,14 +57,11 @@ def getDictionaryHashes():
     if not csvDicts:
         csvDictsHasItem = False
 
-    selector = 1
 
     if txtDictsHasItem:
         for file in txtDicts:
             txtOptions[selector] = file
             selector += 1
-
-        selector = 1
 
     if csvDictsHasItem:
         for file in csvDicts:
@@ -96,13 +82,72 @@ def getDictionaryHashes():
             print()
 
         temp = input("Select the number associated to the wanted dictionary: ")
+        temp = int(temp)
+        if txtOptions.get(temp) == None and csvOptions.get(temp) == None:
+            print("\nInvalid selection!\n")
+            continue
+
+        filePath = temp
+        isDict = True
+
+    if filePath in txtOptions:
+        filePath = f"./dictionaries/txt/{txtOptions[filePath]}"
+    else:
+        filePath = f"./dictionaries/csv/{csvOptions[filePath]}"
+
+    finalFilePath = filePath
+
+    return finalFilePath
+
+
+def getHashes(filePath):
+    hashes = {}
+    md5 = hashlib.md5()
+    try:
+        with open(filePath) as f:
+            for line in f:
+                encodedLine = line.encode('utf-8')
+                md5.update(encodedLine)
+                hashes.setdefault(md5.hexdigest(), line)
+        return hashes
+    except Exception as e:
+        print(f"Error: {e}")
+
+def getPasswordHashes(filePath):
+    hashes = []
+
+    with open(filePath) as f:
+        for line in f:
+            hash = line.strip()
+            hashes.append(hash)
+    return hashes
 
 
 
+def compareHashes(passwordHashes, dictionaryHashes):
+    passwordStorage = {}
+
+    isFound = False
+    defaultTime = 0
+    decryptedHash = ""
+
+    for hash in passwordHashes:
+        passwordStorage[hash] = [isFound, defaultTime, decryptedHash]
+
+    for pHash in passwordHashes:
+        startTime = time.time()
+        for dHash in dictionaryHashes:
+            if pHash == dHash:
+                isFound = True
+                endTime = time.time()
+                decryptedHash = decryptResult(pHash, dictionaryHashes)
+                passwordStorage[pHash] = [isFound, endTime - startTime, decryptedHash]
+                break
 
 
-
-
+def decryptResult(pHash, dictionaryHashes):
+    password = dictionaryHashes.get(pHash)
+    return password
 
 
 
@@ -112,8 +157,18 @@ def main():
     print("")
 
     hashes = []
-    fileName = getPasswordsFile()
-    passwordHashes = getPasswordHashes(fileName)
+
+    passwordsFilePath = getPasswordsFile()
+
+    dictionaryFilePath = getDictionaryFile()
+
+    passwordHashes = getPasswordHashes(passwordsFilePath)
+
+    dictionaryHashes = getHashes(dictionaryFilePath)
+
+    compareHashes(passwordHashes, dictionaryHashes)
+
+    print()
 
 ##############################
 main()
