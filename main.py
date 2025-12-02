@@ -52,7 +52,7 @@ def getDictionaryFile():
     csvDicts = os.listdir("./dictionaries/csv")
 
     if not txtDicts:
-        csvDictsHasItem = False
+        txtDictsHasItem = False
 
     if not csvDicts:
         csvDictsHasItem = False
@@ -83,6 +83,7 @@ def getDictionaryFile():
 
         temp = input("Select the number associated to the wanted dictionary: ")
         temp = int(temp)
+        print()
         if txtOptions.get(temp) == None and csvOptions.get(temp) == None:
             print("\nInvalid selection!\n")
             continue
@@ -102,16 +103,22 @@ def getDictionaryFile():
 
 def getHashes(filePath):
     hashes = {}
-    md5 = hashlib.md5()
     try:
-        with open(filePath) as f:
+        print(f"Attempting to load hashes from {filePath}. Please wait...")
+        with open(filePath, encoding="latin-1", errors="ignore") as f:
             for line in f:
+                line = line.strip("\n")
+                if line == "":
+                    continue
+                md5 = hashlib.md5()
                 encodedLine = line.encode('utf-8')
                 md5.update(encodedLine)
                 hashes.setdefault(md5.hexdigest(), line)
+        print(f"Loaded {len(hashes)} hashes...")
         return hashes
     except Exception as e:
         print(f"Error: {e}")
+        return {}
 
 def getPasswordHashes(filePath):
     hashes = []
@@ -144,17 +151,26 @@ def compareHashes(passwordHashes, dictionaryHashes):
                 passwordStorage[pHash] = [isFound, endTime - startTime, decryptedHash]
                 break
 
+    displayResults(passwordStorage)
+
 
 def decryptResult(pHash, dictionaryHashes):
     password = dictionaryHashes.get(pHash)
+    password = password.strip()
     return password
 
-
-
+def displayResults(passwordStorage):
+    print("\n###############")
+    print("RESULTS:")
+    for hash, data in passwordStorage.items():
+        if data[0]:
+            print(f"\nHash Found: {hash}")
+            print(f"Time: {data[1]}s")
+            print(f"Password: {data[2]}\n")
+    print("###############")
 
 def main():
-    print("Starting Hash Cracking program...")
-    print("")
+    print("Starting Hash Cracking program...\n")
 
     hashes = []
 
@@ -168,7 +184,7 @@ def main():
 
     compareHashes(passwordHashes, dictionaryHashes)
 
-    print()
+    print("\nProgram Complete")
 
 ##############################
 main()
