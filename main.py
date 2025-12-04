@@ -112,10 +112,16 @@ def getHashes(filePath, userHash):
                 if line == "":
                     continue
                 if userHash == "md5":
-                md5 = hashlib.md5()
+                    hashAlgorithm = hashlib.md5()
+                elif userHash == "sha1":
+                    hashAlgorithm = hashlib.sha1()
+                elif userHash == "sha256":
+                    hashAlgorithm = hashlib.sha256()
+                else:
+                    hashAlgorithm = hashlib.md5()
                 encodedLine = line.encode('utf-8')
-                md5.update(encodedLine)
-                hashes.setdefault(md5.hexdigest(), line)
+                hashAlgorithm.update(encodedLine)
+                hashes.setdefault(hashAlgorithm.hexdigest(), line)
         print(f"Loaded {len(hashes)} hashes...")
         return hashes
     except Exception as e:
@@ -169,18 +175,21 @@ def compareHashes(passwordHashes, dictionaryHashes):
     isFound = False
     defaultTime = 0
     decryptedHash = ""
+    attemptCounter = 0
 
     for hash in passwordHashes:
-        passwordStorage[hash] = [isFound, defaultTime, decryptedHash]
+        passwordStorage[hash] = [isFound, defaultTime, decryptedHash, attemptCounter]
 
     for pHash in passwordHashes:
+        attemptCounter = 0
         startTime = time.time()
         for dHash in dictionaryHashes:
+            attemptCounter += 1
             if pHash == dHash:
                 isFound = True
                 endTime = time.time()
                 decryptedHash = decryptResult(pHash, dictionaryHashes)
-                passwordStorage[pHash] = [isFound, endTime - startTime, decryptedHash]
+                passwordStorage[pHash] = [isFound, endTime - startTime, decryptedHash, attemptCounter]
                 break
 
     displayResults(passwordStorage)
@@ -198,6 +207,7 @@ def displayResults(passwordStorage):
         if data[0]:
             print(f"\nHash Found: {hash}")
             print(f"Time: {data[1]}s")
+            print(f"Attempts Count: {data[3]}")
             print(f"Password: {data[2]}\n")
     print("###############")
 
