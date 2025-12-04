@@ -1,6 +1,8 @@
+import csv
 import hashlib
 import time
 import os
+import re
 
 
 def getPasswordsFile():
@@ -131,10 +133,19 @@ def getHashes(filePath, userHash):
 def getPasswordHashes(filePath):
     hashes = []
 
-    with open(filePath) as f:
-        for line in f:
-            hash = line.strip()
-            hashes.append(hash)
+    if re.search(r'\.txt$', filePath):
+        with open(filePath) as f:
+            for line in f:
+                hash = line.strip()
+                hashes.append(hash)
+    elif re.search(r'\.csv$', filePath):
+        with open(filePath) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                hash = row[0]
+                hashes.append(hash)
+    # elif re.search(r'\.json$', filePath):
+
     return hashes
 
 def detectHashType(hashExample):
