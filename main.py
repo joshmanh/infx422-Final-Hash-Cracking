@@ -109,21 +109,46 @@ def getHashes(filePath, userHash):
     try:
         print(f"Attempting to load hashes from {filePath}. Please wait...")
         with open(filePath, encoding="latin-1", errors="ignore") as f:
-            for line in f:
-                line = line.strip("\n")
-                if line == "":
-                    continue
-                if userHash == "md5":
-                    hashAlgorithm = hashlib.md5()
-                elif userHash == "sha1":
-                    hashAlgorithm = hashlib.sha1()
-                elif userHash == "sha256":
-                    hashAlgorithm = hashlib.sha256()
-                else:
-                    hashAlgorithm = hashlib.md5()
-                encodedLine = line.encode('utf-8')
-                hashAlgorithm.update(encodedLine)
-                hashes.setdefault(hashAlgorithm.hexdigest(), line)
+
+            if re.search(r'\.txt$', filePath):
+                for line in f:
+                    password = line.rstrip("\n")
+                    if password == "":
+                        continue
+                    if userHash == "md5":
+                        hashAlgorithm = hashlib.md5()
+                    elif userHash == "sha1":
+                        hashAlgorithm = hashlib.sha1()
+                    elif userHash == "sha256":
+                        hashAlgorithm = hashlib.sha256()
+                    else:
+                        hashAlgorithm = hashlib.md5()
+                    encodedPassword = password.encode('utf-8')
+                    hashAlgorithm.update(encodedPassword)
+                    hashes.setdefault(hashAlgorithm.hexdigest(), password)
+
+            elif re.search(r'\.csv$', filePath):
+                reader = csv.reader(f)
+                header = next(reader)  # It grabs and stores the first row, assumes a header exists in the csv
+                for row in reader:
+                    password = row[0]  # The program assumes the password is in the second column of the csv
+                    if password == "":
+                        continue
+                    if userHash == "md5":
+                        hashAlgorithm = hashlib.md5()
+                    elif userHash == "sha1":
+                        hashAlgorithm = hashlib.sha1()
+                    elif userHash == "sha256":
+                        hashAlgorithm = hashlib.sha256()
+                    else:
+                        hashAlgorithm = hashlib.md5()
+                    encodedPassword = password.encode('utf-8')
+                    hashAlgorithm.update(encodedPassword)
+                    hashes.setdefault(hashAlgorithm.hexdigest(), password)
+            #
+            # THIS SECTION IS FOR JSON FILES
+            # elif re.search(r'\.json$', filePath):
+
         print(f"Loaded {len(hashes)} hashes...")
         return hashes
     except Exception as e:
@@ -136,13 +161,14 @@ def getPasswordHashes(filePath):
     if re.search(r'\.txt$', filePath):
         with open(filePath) as f:
             for line in f:
-                hash = line.strip()
+                hash = line.rstrip("\n")
                 hashes.append(hash)
     elif re.search(r'\.csv$', filePath):
         with open(filePath) as f:
             reader = csv.reader(f)
+            header = next(reader)
             for row in reader:
-                hash = row[0]
+                hash = row[1]
                 hashes.append(hash)
     # elif re.search(r'\.json$', filePath):
 
@@ -208,19 +234,18 @@ def compareHashes(passwordHashes, dictionaryHashes):
 
 def decryptResult(pHash, dictionaryHashes):
     password = dictionaryHashes.get(pHash)
-    password = password.strip()
     return password
 
 def displayResults(passwordStorage):
-    print("\n###############")
-    print("RESULTS:")
+    print("\n#########################################")
+    print("RESULTS:\n")
     for hash, data in passwordStorage.items():
         if data[0]:
             print(f"\nHash Found: {hash}")
             print(f"Time: {data[1]}s")
             print(f"Attempts Count: {data[3]}")
             print(f"Password: {data[2]}\n")
-    print("###############")
+    print("#########################################")
 
 def main():
     print("Starting Hash Cracking program...\n")
