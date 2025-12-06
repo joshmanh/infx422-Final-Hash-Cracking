@@ -1,2 +1,2 @@
-*.csv filter=lfs diff=lfs merge=lfs -text
-*.txt filter=lfs diff=lfs merge=lfs -text
+dictionaries/*.csv filter=lfs diff=lfs merge=lfs -text
+dictionaries/*.txt filter=lfs diff=lfs merge=lfs -text
