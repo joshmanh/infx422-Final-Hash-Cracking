@@ -3,9 +3,18 @@ import hashlib
 import time
 import os
 import re
-
+import json
 
 def getPasswordsFile():
+    """
+    Allows the user to select a password file from a list of files in the passwords folder.
+
+    This function reads the /passwords directory and displays a list of available files to the user.
+    The user is then allowed to select a file by entering the associated number. The function checks if
+    the selected number is valid and returns the filepath if it is.
+
+    :return: finalFilePath: The filepath of the selected file.
+    """
     isFile = False
 
     folder = os.listdir("./passwords")
@@ -41,6 +50,15 @@ def getPasswordsFile():
     return finalFilePath
 
 def getDictionaryFile():
+    """
+    Obtains the filepath of the selected dictionary file.
+
+    This function checks in both the /dictionaries/txt and dictionaries/csv directories for available files. If any are available,
+    the function displays a list of them to the user, allowing them to select one. If the selected file is valid, the function returns
+    the filepath.
+
+    :return: finalFilePath: The filepath of the selected dictionary file.
+    """
     selector = 1
     isDict = False
 
@@ -104,8 +122,24 @@ def getDictionaryFile():
 
 
 def getHashes(filePath, userHash):
+    """
+    Calculates and stores the hashes of the file at the specified path.
+
+    This function creates a python dictionary to house the hashes and their corresponding passwords. Based on the hashing
+    algorithm provided (in variable userHash), the function determines whether the file is in text, csv, or json format.
+    It accommodates for the file type and reads through it, collecting the passwords and calculating their hashes. It then stores
+    the hashes and passwords in the python dictionary and returns it.
+
+    :param filePath: The filepath of the file containing the passwords to be hashed.
+    :param userHash: The hashing algorithm selected by the user.
+    :return: hashes: The Python dictionary containing the hashes and passwords.
+
+    :example:
+
+        >>> getHashes("./dictionaries/txt/rockyou.txt", "md5")
+        {'e10adc3949ba59abbe56e057f20f883e':'123456'}
+    """
     hashes = {}
-    hashEncoding = ""
     try:
         print(f"Attempting to load hashes from {filePath}. Please wait...")
         with open(filePath, encoding="latin-1", errors="ignore") as f:
@@ -156,6 +190,16 @@ def getHashes(filePath, userHash):
         return {}
 
 def getPasswordHashes(filePath):
+    """
+    Calculates and stores the hashes of the user selected passwords file (the file containing passwords to be cracked).
+
+    This function reads the file at the specified path and determines if it is in text, csv, or json format. Based on the file type,
+    it reads through the file and collects the hashes, storing them in a list. The function then returns the list of hashes. This is different
+    from the getHashes function, specifically because this function does not have the plaintext passwords as part of the file data.
+
+    :param filePath:
+    :return: hashes: A list of the hashed passwords
+    """
     hashes = []
 
     if re.search(r'\.txt$', filePath):
@@ -170,11 +214,23 @@ def getPasswordHashes(filePath):
             for row in reader:
                 hash = row[1]
                 hashes.append(hash)
-    # elif re.search(r'\.json$', filePath):
-
+    elif re.search(r'\.json$', filePath):
+        with open(filePath) as f:
+            fileData = json.load(f)
+            for user in fileData:
+                hashes.append(user["password"])
     return hashes
 
 def detectHashType(hashExample):
+    """
+    Detects the hashing algorithm performed on the password(s) wanting to be cracked.
+
+    This function takes in a single hash and uses its length to determine which hashing algorithm was used.
+    It prints a recommendation on which hashing algorithm the user should use.
+
+    :param hashExample: A single example hash obtained from the user's password file.
+    :return:
+    """
     if len(hashExample) == 32:
         print("The program has detected that the hashes are utilizing MD5 hashing algorithm. It is recommended to use this type.")
     elif len(hashExample) == 40:
@@ -185,6 +241,14 @@ def detectHashType(hashExample):
         print("The program is unable to detect the hashing algorithm used. Recommend using each one until the password(s) is/are identified.")
 
 def getUserHashType():
+    """
+    Gets the hashing algorithm the user wants to use for the cracking process.
+
+    This function prompts the user to select a hashing algorithm from MD5, SHA1, or SHA256. It checks if the selection is valid, and if
+    it is, returns the user's selection.
+
+    :return: userHash: the hashing algorithm selected by the user.
+    """
     hashSelected = False
     while not hashSelected:
         print("Available Hashing Algorithms:")
@@ -207,6 +271,17 @@ def getUserHashType():
     return userHash
 
 def compareHashes(passwordHashes, dictionaryHashes):
+    """
+    Compares the hashes of the user's passwords against the hashes of the dictionary.
+
+    This function uses a nested for loop to iterate through each hash in the dictionary and compare it to each hash of the user's password list.
+    If a match is found, the function stores a truthy boolean value, the total execution time for the hash comparison, the plaintext password,
+    and the number of attempts occurred to reach a match in a dictionary (passwordStorage). After finishing all loops, it runs the displayResults function.
+
+    :param passwordHashes: A list of the hashes user passwords (to be cracked).
+    :param dictionaryHashes: A dictionary containing the hashes of the dictionary file and their corresponding plaintext passwords.
+    :return:
+    """
     passwordStorage = {}
 
     isFound = False
@@ -233,10 +308,27 @@ def compareHashes(passwordHashes, dictionaryHashes):
 
 
 def decryptResult(pHash, dictionaryHashes):
+    """
+    Gets the plaintext password corresponding to the provided hash.
+
+    A small function used in compareHashes to obtain the plaintext password of the given hash in the dictionary.
+
+    :param pHash: The hash wanted to be decrypted.
+    :param dictionaryHashes: The dictionary containing the hashes and their corresponding plaintext passwords.
+    :return: The plaintext password corresponding to the provided hash.
+    """
     password = dictionaryHashes.get(pHash)
     return password
 
 def displayResults(passwordStorage):
+    """
+    Displays the results of the cracking process.
+
+    A small function used in compareHashes to display the results of the cracking process in a readable format.
+
+    :param passwordStorage: A dictionary containing the results of the cracking process.
+    :return:
+    """
     print("\n#########################################")
     print("RESULTS:\n")
     for hash, data in passwordStorage.items():
@@ -248,6 +340,10 @@ def displayResults(passwordStorage):
     print("#########################################")
 
 def main():
+    """
+    Main function of the hashing-cracking program.
+    :return:
+    """
     print("Starting Hash Cracking program...\n")
 
     hashes = []
@@ -268,5 +364,6 @@ def main():
 
     print("\nProgram Complete")
 
-##############################
-main()
+#########################################
+if __name__ == "__main__":
+    main()
