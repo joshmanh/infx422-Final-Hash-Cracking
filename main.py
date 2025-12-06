@@ -134,10 +134,6 @@ def getHashes(filePath, userHash):
     :param userHash: The hashing algorithm selected by the user.
     :return: hashes: The Python dictionary containing the hashes and passwords.
 
-    :example:
-
-        >>> getHashes("./dictionaries/txt/rockyou.txt", "md5")
-        {'e10adc3949ba59abbe56e057f20f883e':'123456'}
     """
     hashes = {}
     try:
